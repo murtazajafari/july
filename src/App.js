@@ -1,142 +1,84 @@
-import {useReducer, useState} from 'react'
+import {useEffect, useState} from 'react'
 import './App.css';
+import axios from 'axios';
 
-const todosArray = []
-
-const reducer = (state, action) => {
-    switch (action.type) {
-        case "ADD":
-            return [...state, {
-                id: state.length + 1,
-                title: action.title,
-                status: 'todo'
-            }]
-        case "DOING":
-            return state.map((todo)=>{
-                if(todo.id == action.id) {
-                    return {...todo, status: 'doing'}
-                } else {
-                    return todo
-                }
-            })
-        case "DONE":
-            return state.map((todo)=>{
-                if(todo.id == action.id) {
-                    return {...todo, status: 'done'}
-                } else {
-                    return todo
-                }
-            })
-        default:
-            return state
-    }
-}
 
 function App() {
-
-    const [inputValue, setInputValue] = useState();
-
-    const [todos, dispatch] = useReducer(reducer, todosArray)
+    const [city, setCity] = useState('Auburn NSW');
+    const [suggestions, setSuggestion] = useState();
 
     const inputHandler = (e) => {
-        setInputValue(e.target.value);
-        
-    }
-    const addTodo = (e) => {
-        e.preventDefault();
-        dispatch({type: "ADD" , title: inputValue})
-
-        // clear fields 
-        document.querySelector("form").reset();
+        setCity(e.target.value)
     }
 
-    const markDoing = (todo) => {
-        dispatch({type: "DOING" , id:todo.id})
-    }
+    useEffect(() => {
+        axios.get('https://hotels4.p.rapidapi.com/locations/v2/search', 
+            { 
+                params: {
+                    query: city, 
+                    currency: 'AUD' 
+                },
+                headers: {
+                    'X-RapidAPI-Key': '3e546240a6msh98a99a615f5e055p152e6bjsn22100f02406d',
+                    'X-RapidAPI-Host': 'hotels4.p.rapidapi.com'
+                }
+            }
+        )
+        .then((res)=> {
+            setTimeout(() => {
+                console.log(res.data.suggestions)
+                setSuggestion(res.data.suggestions)
+            }, 100);
+        })
+        .catch((err)=> {
+            console.error(err);
+        });
 
-    const markDone = (todo) => {
-        dispatch({type: "DONE" , id:todo.id})
-    }
+    }, [city])
+    
 
+    
     return (
         <div className="App">
-
-            <h3>Todo app</h3>
-            <form onSubmit={(e)=> { addTodo(e)}}>
-                <input type="text" onChange={(e) => {inputHandler(e)}}  />
-            </form>
-            <h3>Todo</h3>
-            <table border={2} style={{borderCollapse: 'collapse',}}>
-                <tbody>
-                    <tr>
-                        <th>ID</th>
-                        <th>Title</th>
-                        <th>Action</th>
-                    </tr>
-                    {
-                        todos.map((todo) => {
-                            if(todo.status=="todo"){
-                                return (
-                                    <tr key={todo.id} draggable="true">
-                                        <td>{todo.id}</td>
-                                        <td>{todo.title}</td>
-                                        <td><button onClick={()=>markDoing(todo)}>Mark Doing</button></td>
-                                    </tr>
-                                )
-                            }
-                        })
-                    }
-                </tbody>
-            </table>
-
-            <h3>Doing</h3>
-            <table border={2} style={{borderCollapse: 'collapse',}}>
-                <tbody>
-                    <tr>
-                        <th>ID</th>
-                        <th>Title</th>
-                        <th>Action</th>
-                    </tr>
-                    {
-                        todos.map((todo) => {
-                            if(todo.status=="doing"){
-                                return (
-                                    <tr key={todo.id} draggable="true">
-                                        <td>{todo.id}</td>
-                                        <td>{todo.title}</td>
-                                        <td><button onClick={()=>markDone(todo)}>Mark Done</button></td>
-                                    </tr>
-                                )
-                            }
-                        })
-                    }
-                </tbody>
-            </table>
-
-            <h3>Done</h3>
-            <table border={2} style={{borderCollapse: 'collapse',}}>
-                <tbody>
-                    <tr>
-                        <th>ID</th>
-                        <th>Title</th>
-                        <th>Action</th>
-                    </tr>
-                    {
-                        todos.map((todo) => {
-                            if(todo.status=="done"){
-                                return (
-                                    <tr key={todo.id} draggable="true">
-                                        <td>{todo.id}</td>
-                                        <td>{todo.title}</td>
-                                        <td>Completed</td>
-                                    </tr>
-                                )
-                            }
-                        })
-                    }
-                </tbody>
-            </table>
             
+
+            <label>
+                <span>Enter city name: </span>
+                <input type="text" placeholder='Auburn' value={city} onChange={(e) => inputHandler(e)} />
+            </label>
+            <table border={2} style={{borderCollapse: 'collapse',}}>
+                <thead>
+                    <tr>
+                        <th>Group</th>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Latitude</th>
+                        <th>Longitude</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {suggestions && suggestions.map((suggestion) => {
+                        return (
+                            <tr>
+                                <td>{suggestion.group}</td>
+                                {
+                                    suggestion && suggestion.entities.map((entity) => {
+                                        return (
+                                            <tr>
+                                                <td>{entity.name}</td>
+                                                <td>{entity.type}</td>
+                                                <td>{entity.latitude}</td>
+                                                <td>{entity.longitude}</td>
+                                            </tr>
+                                        )
+                                    })
+                                }
+                                <br />
+                            </tr>
+                        )
+                    })}
+                </tbody>
+            </table>
         </div>
     );
 }
