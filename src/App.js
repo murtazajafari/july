@@ -4,37 +4,50 @@ import axios from 'axios';
 
 
 function App() {
-    const [city, setCity] = useState('Auburn NSW');
-    const [suggestions, setSuggestion] = useState();
+
+    const [from, setFrom] = useState();
+    const [to, setTo] = useState();
+    const [q, setQ] = useState();
+    const [currency, setCurrency] = useState();
 
     const inputHandler = (e) => {
-        setCity(e.target.value)
+        if(e.target.name === 'from') {
+            setFrom(e.target.value)
+        } else if(e.target.name === 'to') {
+            setTo(e.target.value)
+        } else if(e.target.name === 'q') {
+            setQ(e.target.value)
+        } else {
+            return 
+        }
     }
 
     useEffect(() => {
-        axios.get('https://hotels4.p.rapidapi.com/locations/v2/search', 
+        axios.get('https://currency-exchange.p.rapidapi.com/exchange', 
             { 
                 params: {
-                    query: city, 
-                    currency: 'AUD' 
+                    from, 
+                    to,
+                    q 
                 },
                 headers: {
                     'X-RapidAPI-Key': '3e546240a6msh98a99a615f5e055p152e6bjsn22100f02406d',
-                    'X-RapidAPI-Host': 'hotels4.p.rapidapi.com'
+                    'X-RapidAPI-Host': 'currency-exchange.p.rapidapi.com'
                 }
             }
         )
         .then((res)=> {
-            setTimeout(() => {
-                console.log(res.data.suggestions)
-                setSuggestion(res.data.suggestions)
-            }, 100);
+            console.log(res)
+
+            setCurrency(res.data * q)
+
+            
         })
         .catch((err)=> {
             console.error(err);
         });
 
-    }, [city])
+    }, [q])
     
 
     
@@ -43,40 +56,31 @@ function App() {
             
 
             <label>
-                <span>Enter city name: </span>
-                <input type="text" placeholder='Auburn' value={city} onChange={(e) => inputHandler(e)} />
+                <span>From:</span>
+                <input type="text" name='from' placeholder='AUD' value={from} onChange={(e) => inputHandler(e)} />
+            </label>
+            <label>
+                <span>To:</span>
+                <input type="text" name='to' placeholder='PKR' value={to} onChange={(e) => inputHandler(e)} />
+            </label>
+            <label>
+                <span>$:</span>
+                <input type="text" name='q' placeholder='$' value={q} onChange={(e) => inputHandler(e)} />
             </label>
             <table border={2} style={{borderCollapse: 'collapse',}}>
                 <thead>
                     <tr>
-                        <th>Group</th>
-                        <th>Name</th>
-                        <th>Type</th>
-                        <th>Latitude</th>
-                        <th>Longitude</th>
+                        <th>From</th>
+                        <th>To</th>
+                        <th>$</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {suggestions && suggestions.map((suggestion) => {
-                        return (
-                            <tr>
-                                <td>{suggestion.group}</td>
-                                {
-                                    suggestion && suggestion.entities.map((entity) => {
-                                        return (
-                                            <tr>
-                                                <td>{entity.name}</td>
-                                                <td>{entity.type}</td>
-                                                <td>{entity.latitude}</td>
-                                                <td>{entity.longitude}</td>
-                                            </tr>
-                                        )
-                                    })
-                                }
-                                <br />
-                            </tr>
-                        )
-                    })}
+                    <tr>
+                        <td>{from}</td>
+                        <td>{to}</td>
+                        <td>{currency}</td>
+                    </tr>
                 </tbody>
             </table>
         </div>
