@@ -22,6 +22,25 @@ const getUserPicture = (userInfo) => {
     const {picture : {large}} = userInfo;
     return `${large}`
 }
+const getUserAddress = (userInfo) => {
+    const {location : 
+        {
+            street : {
+                number,name
+            },
+            city,
+            state,
+            postcode,
+            country
+        }
+    } = userInfo;
+    
+    return `${number} ${name} ${city} ${postcode} ${state} ${country}`
+}
+const getUserDOB = (userInfo) => {
+    const {dob : {date}} = userInfo;
+    return `${new Date(date).getDay()}-${new Date(date).getMonth()}-${new Date(date).getFullYear()}`
+}
 
 
 function App() {
@@ -38,8 +57,9 @@ function App() {
             setRandomDataJSON(JSON.stringify(randomData, null, 2) || 'Not data found')
             if(randomData === undefined) return
             const newUserInfo = [
-                ...userInfos,
-                ...randomData.results
+                // can exchange the order 
+                ...randomData.results,
+                ...userInfos
             ]
             setUserInfos(newUserInfo)
             setNextPageNumber(randomData.info.page + 1)
@@ -57,14 +77,40 @@ function App() {
             <p>{counter}</p>
             <button onClick={() => {setCounter(counter + 1)}}>Increase</button>
             <button onClick={fetchNextUser}>Fetch Next user</button>
-            {
-                userInfos && userInfos.map((userInfo, idx) => (
-                    <div key={idx}>
-                        <p>{getFullUserName(userInfo)}</p>
-                        <img src={getUserPicture(userInfo)} alt="" />
-                    </div>
-                ))
-            }
+
+            <table border={2} style={{borderCollapse: 'collapse',}}>
+                <thead>
+                    <tr>
+                        <th>Picture</th>
+                        <th>Name</th>
+                        <th>Gender</th>
+                        <th>Address</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>DOB</th>
+                        <th>Nat</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {
+                        userInfos && userInfos.map((userInfo, idx) => (
+
+                            <tr key={idx}>
+                                <td><img src={getUserPicture(userInfo)} alt="" /></td>
+                                <td>{getFullUserName(userInfo)}</td>
+                                <td>{userInfo.gender}</td>
+                                <td>{getUserAddress(userInfo)}</td>
+                                <td>{userInfo.email}</td>
+                                <td>{userInfo.phone}</td>
+                                <td>{getUserDOB(userInfo)}</td>
+                                <td>{userInfo.nat}</td>
+                            </tr>
+                                
+                        ))
+                    }
+                </tbody>
+            </table>
+            
 
             {/* <pre>{userInfos}</pre> */}
             <pre>{randomDataJSON}</pre>
