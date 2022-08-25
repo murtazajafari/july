@@ -83,12 +83,12 @@ function App() {
                     <tr>
                         <th>Picture</th>
                         <th>Name</th>
-                        <th>Gender</th>
-                        <th>Address</th>
                         <th>Email</th>
                         <th>Phone</th>
-                        <th>DOB</th>
+                        <th>Gender</th>
                         <th>Nat</th>
+                        <th>Address</th>
+                        <th>DOB</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -98,12 +98,12 @@ function App() {
                             <tr key={idx}>
                                 <td><img src={getUserPicture(userInfo)} alt="" /></td>
                                 <td>{getFullUserName(userInfo)}</td>
-                                <td>{userInfo.gender}</td>
-                                <td>{getUserAddress(userInfo)}</td>
                                 <td>{userInfo.email}</td>
                                 <td>{userInfo.phone}</td>
-                                <td>{getUserDOB(userInfo)}</td>
+                                <td>{userInfo.gender}</td>
                                 <td>{userInfo.nat}</td>
+                                <td>{getUserAddress(userInfo)}</td>
+                                <td>{getUserDOB(userInfo)}</td>
                             </tr>
                                 
                         ))
