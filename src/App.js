@@ -1,119 +1,99 @@
-import {useEffect, useState, useRef} from 'react'
-import axios from 'axios';
+import {useState, useEffect,useMemo, createContext} from 'react'
+import Customers from './components/Customers'
+import Customer from './components/Customer'
+import data from './data/data.json'
+import Pagination from './components/Pagination'
+import './App.css'
 
-
-
-const fetchAPI = (nextPageNumber) => {
-    return axios
-        .get(`https://randomuser.me/api/?page=${nextPageNumber}`)
-        .then(({data}) => {
-            return data
-        })
-        .catch((err) => {
-            console.error(err)
-        })
-}
-
-const getFullUserName = (userInfo) => {
-    const {name : {first,last}} = userInfo;
-    return `${first} ${last}`
-}
-const getUserPicture = (userInfo) => {
-    const {picture : {large}} = userInfo;
-    return `${large}`
-}
-const getUserAddress = (userInfo) => {
-    const {location : 
-        {
-            street : {
-                number,name
-            },
-            city,
-            state,
-            postcode,
-            country
-        }
-    } = userInfo;
-    
-    return `${number} ${name} ${city} ${postcode} ${state} ${country}`
-}
-const getUserDOB = (userInfo) => {
-    const {dob : {date}} = userInfo;
-    return `${new Date(date).getDay()}-${new Date(date).getMonth()}-${new Date(date).getFullYear()}`
-}
-
+export const CustomerContext = createContext(null)
 
 function App() {
-    const [counter, setCounter] = useState(0);
-    const [randomDataJSON, setRandomDataJSON] = useState('');
     const [userInfos, setUserInfos] = useState('');
-    const [nextPageNumber, setNextPageNumber] = useState(1);
-
-    // const fetchNextUser = useRef(()=>{});
+    const [currentPage, setCurrentPage] = useState(1);
+    const [perPage, setPerPage] = useState(20);
+    const [sort, setSort] = useState('');
+    const [order, setOrder] = useState('ASC');
+    const [searched, setSearch] = useState('');
     
-    const fetchNextUser = () => {
-
-        fetchAPI(nextPageNumber).then((randomData)=>{
-            setRandomDataJSON(JSON.stringify(randomData, null, 2) || 'Not data found')
-            if(randomData === undefined) return
-            const newUserInfo = [
-                // can exchange the order 
-                ...randomData.results,
-                ...userInfos
-            ]
-            setUserInfos(newUserInfo)
-            setNextPageNumber(randomData.info.page + 1)
-        });
-    }
-
-    useEffect(() => {
-        fetchNextUser()
+    
+    useMemo(() => {
+        setUserInfos(data)
     }, [])
+
+    const sorting = (col) => {
+        if(order === 'ASC') {
+            const sorted = [...userInfos].sort((a, b)=> 
+                isNaN(a[col]) ? a[col].toLowerCase() > b[col].toLowerCase() ? 1 : -1 : a[col] > b[col] ? 1 : -1
+            )
+            setUserInfos(sorted)
+            setOrder('DSC')
+            console.log(sorted)
+        }
+        if(order === 'DSC') {
+            const sorted = [...userInfos].sort((a, b) => 
+                !isNaN(a[col]) ? a[col] < b[col] ? 1 : -1 : a[col].toLowerCase() < b[col].toLowerCase() ? 1 : -1 
+            )
+            setUserInfos(sorted)
+            setOrder('ASC')
+            console.log(sorted)
+        }
+        setSort(col)
+    }
+    const filtering = (searched) => {
+        setSearch(searched);
+        const filtered = [...data].filter((item)=> {
+            return item.first_name.toLowerCase().indexOf(searched.toLowerCase()) !== -1 ? item : ''
+        })
+        setUserInfos(filtered)
+        console.log(filtered)
+        
+    }
+    
     
 
     return (
         <div className="App" style={{padding: '30px'}}>
             <h1>Practicing with react API</h1>
-            <p>{counter}</p>
-            <button onClick={() => {setCounter(counter + 1)}}>Increase</button>
-            <button onClick={fetchNextUser}>Fetch Next user</button>
-
+            <p>{order}</p>
+            <input type="text" value={searched} onChange={(e) => filtering(e.target.value)} />
+            <input type="number" name='perppage' value={perPage} onChange={(e) => setPerPage(parseInt(e.target.value))} />
+            <select name="perPage" id="perPage" value={sort} onChange={(e)=>sorting(e.target.value)}>
+                <option value="id">ID</option>
+                <option value="email">Email</option>
+                <option value="phone">Phone</option>
+            </select>
             <table border={2} style={{borderCollapse: 'collapse',}}>
                 <thead>
                     <tr>
-                        <th>Picture</th>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Phone</th>
-                        <th>Gender</th>
-                        <th>Nat</th>
-                        <th>Address</th>
-                        <th>DOB</th>
+                        <th onClick={()=>sorting('id')}>ID</th>
+                        <th onClick={()=>sorting('first_name')}>Name</th>
+                        <th onClick={()=>sorting('email')}>Email</th>
+                        <th onClick={()=>sorting('phone')}>Phone</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {
-                        userInfos && userInfos.map((userInfo, idx) => (
+                    {/* <CustomerContext.Provider value={{
+                        userInfos, 
+                        currentPage, 
+                        perPage
+                    }}>
+                        <Customers />
+                    </CustomerContext.Provider> */}
 
-                            <tr key={idx}>
-                                <td><img src={getUserPicture(userInfo)} alt="" /></td>
-                                <td>{getFullUserName(userInfo)}</td>
-                                <td>{userInfo.email}</td>
-                                <td>{userInfo.phone}</td>
-                                <td>{userInfo.gender}</td>
-                                <td>{userInfo.nat}</td>
-                                <td>{getUserAddress(userInfo)}</td>
-                                <td>{getUserDOB(userInfo)}</td>
-                            </tr>
-                                
-                        ))
-                    }
+                    { userInfos && userInfos.map((userInfo, idx) => (
+                        <Customer key={idx} userInfo={userInfo} />
+                    )) }
                 </tbody>
             </table>
+        
+            <Pagination 
+                userInfos={userInfos}
+                currentPage={currentPage}
+                setCurrentPage={setCurrentPage}
+                perPage={perPage}
+            />
             
-
-            {/* <pre>{userInfos}</pre> */}
-            <pre>{randomDataJSON}</pre>
+            
         </div>
     );
 }
